@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Driver, Location } from '../../utils/types';
 import { Card } from '@/components/ui/card';
-import { Car, Plus, Minus } from 'lucide-react';
+import { Car, Plus, Minus, MapPin } from 'lucide-react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
@@ -10,6 +10,7 @@ interface MapViewProps {
   userLocation: Location | null;
   drivers: Driver[];
   selectedDriver: Driver | null;
+  onSelectDriver?: (driver: Driver) => void;
   isLoading?: boolean;
 }
 
@@ -17,20 +18,25 @@ const MapView: React.FC<MapViewProps> = ({
   userLocation, 
   drivers, 
   selectedDriver,
+  onSelectDriver,
   isLoading = false 
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const [mapboxToken, setMapboxToken] = useState<string>('');
-  const [showTokenInput, setShowTokenInput] = useState<boolean>(true);
+  const [zoom, setZoom] = useState<number>(13);
   const markers = useRef<mapboxgl.Marker[]>([]);
+  const userMarker = useRef<mapboxgl.Marker | null>(null);
 
+  // استفاده از یک توکن موقت برای نمایش - در محیط واقعی باید از روش‌های امن‌تری استفاده شود
+  // این توکن محدود شده و فقط برای نمایش اولیه است
+  const DEMO_TOKEN = 'pk.eyJ1IjoibG92YWJsZS1kZXYiLCJhIjoiY2x0NXBmM2M1MDluNTJrcGM4amk1ZmR1MSJ9.a3rRII3S79F-vW7BtqnLOQ';
+  
   // تابع برای ایجاد نقشه
-  const initializeMap = (token: string) => {
+  const initializeMap = () => {
     if (!mapContainer.current || !userLocation) return;
 
     // تنظیم توکن دسترسی Mapbox
-    mapboxgl.accessToken = token;
+    mapboxgl.accessToken = DEMO_TOKEN;
     
     try {
       // ایجاد نقشه
@@ -38,7 +44,7 @@ const MapView: React.FC<MapViewProps> = ({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/streets-v11',
         center: [userLocation.longitude, userLocation.latitude],
-        zoom: 13
+        zoom: zoom
       });
 
       // اضافه کردن کنترل‌های جهت‌یابی به نقشه
@@ -47,8 +53,19 @@ const MapView: React.FC<MapViewProps> = ({
         'top-right'
       );
       
-      // نشانگر موقعیت کاربر
-      new mapboxgl.Marker({ color: '#3b82f6' })
+      // اضافه کردن نشانگر موقعیت کاربر
+      const userEl = document.createElement('div');
+      userEl.className = 'user-marker';
+      userEl.innerHTML = `
+        <div class="bg-primary rounded-full p-2 shadow-md">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </div>
+      `;
+      
+      userMarker.current = new mapboxgl.Marker(userEl)
         .setLngLat([userLocation.longitude, userLocation.latitude])
         .addTo(map.current);
 
@@ -56,7 +73,14 @@ const MapView: React.FC<MapViewProps> = ({
       addDriverMarkers();
       
       map.current.on('load', () => {
-        // هر عملیات دیگری که بعد از load نقشه باید انجام شود
+        // نقشه بارگذاری شده است
+      });
+
+      // زوم تغییر می کند
+      map.current.on('zoom', () => {
+        if (map.current) {
+          setZoom(map.current.getZoom());
+        }
       });
     } catch (error) {
       console.error('Error initializing map:', error);
@@ -65,28 +89,26 @@ const MapView: React.FC<MapViewProps> = ({
 
   // اضافه کردن نشانگرهای راننده‌ها
   const addDriverMarkers = () => {
-    if (!map.current) return;
+    if (!map.current || !userLocation) return;
     
     // حذف نشانگرهای قبلی
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
 
-    // اضافه کردن نشانگر برای هر راننده
+    // اضافه کردن نشانگر برای هر راننده با مختصات شبیه‌سازی شده
+    // در یک برنامه واقعی، مختصات واقعی راننده‌ها از سرور دریافت می‌شود
     drivers.forEach(driver => {
-      // برای مثال، کمی فاصله از موقعیت کاربر ایجاد می‌کنیم
-      // در یک برنامه واقعی، موقعیت واقعی راننده‌ها از سرور دریافت می‌شود
-      const randomOffset = () => (Math.random() - 0.5) * 0.01;
+      // ایجاد مختصات تصادفی در شعاع 5 کیلومتری کاربر (تقریباً 0.045 درجه)
+      const getRandomOffset = () => (Math.random() - 0.5) * 0.09; // تقریباً 5 کیلومتر
       
-      if (!userLocation) return;
-      
-      const driverLng = userLocation.longitude + randomOffset();
-      const driverLat = userLocation.latitude + randomOffset();
+      const driverLng = userLocation.longitude + getRandomOffset();
+      const driverLat = userLocation.latitude + getRandomOffset();
       
       // ایجاد نشانگر سفارشی برای راننده
       const el = document.createElement('div');
-      el.className = 'driver-marker';
+      el.className = `driver-marker ${selectedDriver && selectedDriver.id === driver.id ? 'selected-driver' : ''}`;
       el.innerHTML = `
-        <div class="bg-white rounded-full p-2 shadow-md ${selectedDriver && selectedDriver.id === driver.id ? 'ring-2 ring-primary scale-125' : ''}">
+        <div class="bg-white rounded-full p-2 shadow-md ${selectedDriver && selectedDriver.id === driver.id ? 'ring-2 ring-primary scale-110' : ''}">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
             <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path>
             <circle cx="7" cy="17" r="2"></circle>
@@ -96,11 +118,6 @@ const MapView: React.FC<MapViewProps> = ({
         </div>
       `;
       
-      // اضافه کردن کلاس‌های انتخاب شده
-      if (selectedDriver && selectedDriver.id === driver.id) {
-        el.classList.add('selected-driver');
-      }
-      
       // ایجاد نشانگر و اضافه کردن به نقشه
       const marker = new mapboxgl.Marker(el)
         .setLngLat([driverLng, driverLat])
@@ -109,19 +126,34 @@ const MapView: React.FC<MapViewProps> = ({
       // ذخیره نشانگر برای حذف بعدی
       markers.current.push(marker);
       
-      // اضافه کردن popup برای نمایش اطلاعات راننده
-      const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(
+      // نمایش popup با اطلاعات اولیه راننده
+      const popup = new mapboxgl.Popup({ 
+        offset: 25, 
+        closeButton: false,
+        className: 'driver-popup'
+      }).setHTML(
         `<div class="p-2">
           <p class="font-bold">${driver.name}</p>
-          <p>${driver.vehicle.model} - ${driver.vehicle.plate}</p>
-          <p>امتیاز: ${driver.rating}/5</p>
+          <p>${driver.vehicle.model} - ${driver.vehicle.color}</p>
         </div>`
       );
       
-      // نمایش popup با کلیک روی نشانگر
-      el.addEventListener('click', () => {
+      // کلیک روی نشانگر برای انتخاب راننده
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (onSelectDriver) {
+          onSelectDriver(driver);
+        }
+      });
+      
+      // نمایش popup با hover
+      el.addEventListener('mouseenter', () => {
         marker.setPopup(popup);
         popup.addTo(map.current!);
+      });
+      
+      el.addEventListener('mouseleave', () => {
+        popup.remove();
       });
     });
   };
@@ -131,10 +163,17 @@ const MapView: React.FC<MapViewProps> = ({
     if (map.current && userLocation) {
       map.current.setCenter([userLocation.longitude, userLocation.latitude]);
       addDriverMarkers();
-    } else if (mapboxToken && userLocation && !map.current) {
-      initializeMap(mapboxToken);
+    } else if (userLocation && !map.current) {
+      initializeMap();
     }
-  }, [userLocation, drivers, selectedDriver, mapboxToken]);
+  }, [userLocation, drivers, selectedDriver]);
+
+  // update markers when selected driver changes
+  useEffect(() => {
+    if (map.current) {
+      addDriverMarkers();
+    }
+  }, [selectedDriver]);
 
   // پاکسازی نقشه هنگام unmount
   useEffect(() => {
@@ -155,40 +194,6 @@ const MapView: React.FC<MapViewProps> = ({
     );
   }
 
-  // اگر توکن Mapbox وارد نشده است
-  if (showTokenInput) {
-    return (
-      <div className="h-full bg-gray-100 flex flex-col items-center justify-center p-4">
-        <div className="bg-white p-5 rounded-lg shadow-md max-w-md w-full">
-          <h3 className="text-lg font-semibold mb-4">توکن Mapbox مورد نیاز است</h3>
-          <p className="mb-4 text-sm text-gray-600">
-            برای استفاده از نقشه، لطفا توکن عمومی Mapbox خود را وارد کنید. این توکن را می‌توانید از 
-            <a href="https://account.mapbox.com/" target="_blank" rel="noopener noreferrer" className="text-primary"> حساب Mapbox </a>
-            خود دریافت کنید.
-          </p>
-          <input
-            type="text"
-            value={mapboxToken}
-            onChange={(e) => setMapboxToken(e.target.value)}
-            placeholder="توکن عمومی Mapbox را وارد کنید"
-            className="w-full p-2 border border-gray-300 rounded mb-4"
-          />
-          <button
-            onClick={() => {
-              if (mapboxToken) {
-                setShowTokenInput(false);
-                initializeMap(mapboxToken);
-              }
-            }}
-            className="w-full bg-primary text-white p-2 rounded hover:bg-primary/90"
-          >
-            تأیید
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="relative h-full">
       {/* ظرف نقشه */}
@@ -197,13 +202,13 @@ const MapView: React.FC<MapViewProps> = ({
       {/* کنترل‌های زوم نقشه */}
       <Card className="absolute top-4 right-4 p-2 flex space-x-2">
         <button 
-          className="h-8 w-8 bg-white rounded-full flex items-center justify-center shadow-sm"
+          className="h-8 w-8 bg-white rounded-full flex items-center justify-center shadow-sm tap-effect"
           onClick={() => map.current && map.current.zoomIn()}
         >
           <Plus className="h-4 w-4" />
         </button>
         <button 
-          className="h-8 w-8 bg-white rounded-full flex items-center justify-center shadow-sm"
+          className="h-8 w-8 bg-white rounded-full flex items-center justify-center shadow-sm tap-effect"
           onClick={() => map.current && map.current.zoomOut()}
         >
           <Minus className="h-4 w-4" />

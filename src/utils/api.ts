@@ -68,6 +68,35 @@ export const mapAPI = {
   getUserLocation: async (): Promise<Location> => {
     await delay(500);
     return mockUserLocation;
+  },
+
+  // Get driver's live location (simulated)
+  getDriverLiveLocation: async (driverId: string): Promise<Location> => {
+    await delay(300);
+    
+    // در دنیای واقعی، این داده‌ها از سرور یا سیستم GPS راننده دریافت می‌شود
+    // برای شبیه‌سازی، مکان راننده را با یک حرکت تصادفی به سمت کاربر تغییر می‌دهیم
+    
+    // پیدا کردن راننده
+    const driver = mockDrivers.find(d => d.id === driverId);
+    if (!driver) return mockUserLocation; // در صورت عدم وجود راننده مکان کاربر برگردانده می‌شود
+    
+    // ایجاد حرکت به سمت کاربر با افزودن مقدار کوچک تصادفی
+    const moveTowardsUser = (driverCoord: number, userCoord: number): number => {
+      const direction = userCoord > driverCoord ? 1 : -1;
+      const distance = Math.abs(userCoord - driverCoord);
+      
+      // اگر راننده نزدیک کاربر است، حرکت کمتری انجام دهد
+      const moveAmount = Math.min(distance, Math.random() * 0.0008);
+      
+      return driverCoord + (moveAmount * direction);
+    };
+    
+    // حرکت به سمت کاربر با کمی تصادفی‌سازی
+    return {
+      latitude: moveTowardsUser(driver.location.latitude, mockUserLocation.latitude),
+      longitude: moveTowardsUser(driver.location.longitude, mockUserLocation.longitude)
+    };
   }
 };
 

@@ -76,18 +76,25 @@
   }
 }
 
+/* استایل‌های نشانگر کاربر */
+.user-marker {
+  z-index: 5;
+}
+
 /* استایل‌های نشانگر راننده */
 .driver-marker {
   cursor: pointer;
   transition: all 0.3s ease;
+  z-index: 1;
 }
 
 .driver-marker:hover {
   transform: scale(1.1);
+  z-index: 2;
 }
 
 .selected-driver {
-  z-index: 10;
+  z-index: 3 !important;
   animation: pulse 2s infinite;
 }
 
@@ -103,6 +110,12 @@
   }
 }
 
+/* استایل popup راننده */
+.driver-popup .mapboxgl-popup-content {
+  padding: 10px;
+  border-radius: 8px;
+}
+
 /* استایل‌های دیگر */
 .tap-effect {
   transition: transform 0.1s;
@@ -110,4 +123,23 @@
 
 .tap-effect:active {
   transform: scale(0.97);
+}
+
+.bottom-sheet {
+  transform: translateY(0);
+  transition: transform 0.3s ease-in-out;
+}
+
+.bottom-sheet-collapsed {
+  transform: translateY(calc(100% - 100px));
+}
+
+.driver-list {
+  max-height: 30vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.ride-details-panel {
+  transition: all 0.3s ease;
 }

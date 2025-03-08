@@ -11,6 +11,7 @@ import RideRequest from '../components/ride/RideRequest';
 import AppLayout from '../components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 
 const Home = () => {
   const { user } = useAuth();
@@ -18,6 +19,7 @@ const Home = () => {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [userLocation, setUserLocation] = useState<Location | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -39,8 +41,8 @@ const Home = () => {
         setDrivers(nearbyDrivers);
       } catch (error) {
         toast({
-          title: "Error",
-          description: "Failed to load map data",
+          title: "خطا",
+          description: "خطا در بارگذاری اطلاعات نقشه",
           variant: "destructive",
         });
         console.error("Error fetching data:", error);
@@ -54,27 +56,41 @@ const Home = () => {
 
   const handleDriverSelect = (driver: Driver) => {
     setSelectedDriver(driver);
+    setIsPanelCollapsed(false); // باز کردن پنل برای نمایش جزئیات راننده
   };
 
   const handleChat = () => {
     toast({
-      title: "Chat",
-      description: "Chat feature will be available soon",
+      title: "چت",
+      description: "قابلیت چت به زودی در دسترس خواهد بود",
     });
   };
 
   const handleCall = () => {
     toast({
-      title: "Call",
-      description: "Call feature will be available soon",
+      title: "تماس",
+      description: `در حال تماس با ${selectedDriver?.name}...`,
     });
+    // در حالت واقعی اینجا اتصال به API تماس انجام می‌شود
   };
 
   const handleBook = () => {
+    if (!selectedDriver) {
+      toast({
+        title: "خطا",
+        description: "لطفا ابتدا یک راننده انتخاب کنید",
+      });
+      return;
+    }
+    
     toast({
-      title: "Book",
-      description: "Please select a destination first",
+      title: "درخواست سفر",
+      description: "لطفا مقصد خود را مشخص کنید",
     });
+  };
+
+  const togglePanel = () => {
+    setIsPanelCollapsed(!isPanelCollapsed);
   };
 
   return (
@@ -86,12 +102,23 @@ const Home = () => {
             userLocation={userLocation} 
             drivers={drivers} 
             selectedDriver={selectedDriver}
+            onSelectDriver={handleDriverSelect}
             isLoading={isLoading}
           />
         </div>
         
         {/* Driver Details or Request Form */}
-        <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-lg transition-all duration-300 z-10">
+        <div className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-lg transition-all duration-300 z-10 bottom-sheet ${isPanelCollapsed ? 'bottom-sheet-collapsed' : ''}`}>
+          {/* Toggle Button */}
+          <div className="flex justify-center">
+            <button 
+              className="w-10 h-6 bg-gray-100 rounded-b-lg flex items-center justify-center -mt-6 shadow-md"
+              onClick={togglePanel}
+            >
+              {isPanelCollapsed ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </button>
+          </div>
+          
           {selectedDriver ? (
             <div className="p-4">
               <DriverCard 
@@ -106,13 +133,16 @@ const Home = () => {
             </div>
           ) : (
             <div className="p-4 space-y-4">
-              <h2 className="text-xl font-semibold">Available Drivers</h2>
-              <div className="space-y-3 max-h-[300px] overflow-y-auto">
+              <h2 className="text-xl font-semibold">رانندگان در اطراف شما</h2>
+              <p className="text-sm text-muted-foreground">
+                رانندگان در شعاع ۵ کیلومتری شما نمایش داده می‌شوند. برای مشاهده اطلاعات بیشتر روی نشانگر راننده‌ها کلیک کنید.
+              </p>
+              <div className="driver-list space-y-3">
                 {drivers.map(driver => (
                   <div 
                     key={driver.id} 
                     onClick={() => handleDriverSelect(driver)}
-                    className="cursor-pointer"
+                    className="cursor-pointer tap-effect"
                   >
                     <DriverCard 
                       driver={driver} 
