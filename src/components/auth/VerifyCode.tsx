@@ -7,12 +7,16 @@ import { toast } from 'sonner';
 import { ChevronLeft, ChevronRight, Shield } from 'lucide-react';
 
 interface VerifyCodeProps {
-  phoneNumber: string;
-  onBack: () => void;
-  onSuccess: () => void;
+  phoneNumber?: string;
+  onBack?: () => void;
+  onSuccess?: () => void;
 }
 
-const VerifyCode: React.FC<VerifyCodeProps> = ({ phoneNumber, onBack, onSuccess }) => {
+const VerifyCode: React.FC<VerifyCodeProps> = ({ 
+  phoneNumber = '', 
+  onBack = () => {}, 
+  onSuccess = () => {} 
+}) => {
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { verifyCode } = useAuth();
@@ -39,7 +43,7 @@ const VerifyCode: React.FC<VerifyCodeProps> = ({ phoneNumber, onBack, onSuccess 
       return;
     }
 
-    // Handle normal input
+    // Normal input
     const newCode = [...code];
     newCode[index] = value;
     setCode(newCode);

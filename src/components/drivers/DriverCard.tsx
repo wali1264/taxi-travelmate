@@ -7,19 +7,51 @@ import { Star, Phone, MessageCircle, X } from 'lucide-react';
 
 interface DriverCardProps {
   driver: Driver;
-  onClose: () => void;
-  onChat: () => void;
-  onCall: () => void;
-  onBook: () => void;
+  expanded?: boolean;
+  onClose?: () => void;
+  onChat?: () => void;
+  onCall?: () => void;
+  onBook?: () => void;
 }
 
 const DriverCard: React.FC<DriverCardProps> = ({
   driver,
-  onClose,
-  onChat,
-  onCall,
-  onBook,
+  expanded = false,
+  onClose = () => {},
+  onChat = () => {},
+  onCall = () => {},
+  onBook = () => {},
 }) => {
+  // For non-expanded view, render a simplified card
+  if (!expanded) {
+    return (
+      <Card className="w-full border border-border shadow-sm mb-2">
+        <CardContent className="p-3">
+          <div className="flex items-center gap-3">
+            <img
+              src={driver.photo}
+              alt={driver.name}
+              className="w-10 h-10 rounded-md object-cover"
+            />
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <h3 className="font-medium">{driver.name}</h3>
+                <div className="flex items-center gap-1 text-xs font-medium">
+                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                  {driver.rating.toFixed(1)}
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {driver.vehicle.color} {driver.vehicle.model} • {driver.vehicle.plate}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Expanded view
   return (
     <Card className="w-full border-0 shadow-none bg-transparent animate-slide-up">
       <div className="flex justify-end mb-2">

@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { RideState, Ride, Driver, Location } from '../utils/types';
+import { RideState, Ride, Driver, Location, Address } from '../utils/types';
 import { rideAPI, mapAPI } from '../utils/api';
 import { useAuth } from './AuthContext';
 
@@ -76,11 +76,13 @@ interface RideContextType extends RideState {
   getNearbyDrivers: (location: Location) => Promise<Driver[]>;
   getDriverDetails: (driverId: string) => Promise<Driver | null>;
   selectDriver: (driver: Driver | null) => void;
-  requestRide: (driverId: string, pickup: any, dropoff: any) => Promise<Ride | null>;
+  setSelectedDriver: (driver: Driver | null) => void;
+  requestRide: (driverId: string, pickup: Address, dropoff: Address) => Promise<Ride | null>;
   cancelRide: (rideId: string) => Promise<boolean>;
   getRideHistory: () => Promise<void>;
   rateRide: (rideId: string, rating: number) => Promise<boolean>;
   clearRideError: () => void;
+  setCurrentRide: (ride: Ride | null) => void;
 }
 
 const RideContext = createContext<RideContextType | undefined>(undefined);
@@ -121,13 +123,18 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Select driver
+  // Select driver (alias for setSelectedDriver for backward compatibility)
   const selectDriver = (driver: Driver | null) => {
     dispatch({ type: 'SELECT_DRIVER', driver });
   };
 
+  // Set selected driver
+  const setSelectedDriver = (driver: Driver | null) => {
+    dispatch({ type: 'SELECT_DRIVER', driver });
+  };
+
   // Request ride
-  const requestRide = async (driverId: string, pickup: any, dropoff: any) => {
+  const requestRide = async (driverId: string, pickup: Address, dropoff: Address) => {
     if (!user?.id) return null;
     
     dispatch({ type: 'FETCH_START' });
@@ -139,6 +146,11 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
       dispatch({ type: 'FETCH_ERROR', error: 'Failed to request ride' });
       return null;
     }
+  };
+
+  // Set current ride
+  const setCurrentRide = (ride: Ride | null) => {
+    dispatch({ type: 'SET_CURRENT_RIDE', ride });
   };
 
   // Cancel ride
@@ -196,11 +208,13 @@ export const RideProvider: React.FC<{ children: React.ReactNode }> = ({ children
     getNearbyDrivers,
     getDriverDetails,
     selectDriver,
+    setSelectedDriver,
     requestRide,
     cancelRide,
     getRideHistory,
     rateRide,
-    clearRideError
+    clearRideError,
+    setCurrentRide
   };
 
   return <RideContext.Provider value={value}>{children}</RideContext.Provider>;

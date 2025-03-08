@@ -7,7 +7,7 @@ import { Driver, Ride } from '../utils/types';
 import RideTracker from '../components/ride/RideTracker';
 import AppLayout from '../components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Check, X } from 'lucide-react';
 
@@ -157,6 +157,9 @@ const RideDetails = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Rate Your Ride</DialogTitle>
+            <DialogDescription>
+              Please rate your experience with {driver.name}
+            </DialogDescription>
           </DialogHeader>
           <div className="flex justify-center py-4">
             <div className="flex gap-2">

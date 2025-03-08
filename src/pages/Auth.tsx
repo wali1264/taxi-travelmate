@@ -1,5 +1,6 @@
 
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PhoneAuth from '../components/auth/PhoneAuth';
 import VerifyCode from '../components/auth/VerifyCode';
 import { useAuth } from '../context/AuthContext';
@@ -7,7 +8,30 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Auth = () => {
-  const { user, isLoading } = useAuth();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('login');
+  const [phoneNumber, setPhoneNumber] = useState('');
+
+  // Redirect if user is already authenticated
+  React.useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
+
+  const handleCodeSent = (phone: string) => {
+    setPhoneNumber(phone);
+    setActiveTab('verify');
+  };
+
+  const handleBack = () => {
+    setActiveTab('login');
+  };
+
+  const handleSuccess = () => {
+    navigate('/');
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -16,16 +40,20 @@ const Auth = () => {
           <CardTitle className="text-2xl font-bold text-center">RideShare</CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="login" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-4">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="verify">Verify</TabsTrigger>
             </TabsList>
             <TabsContent value="login">
-              <PhoneAuth />
+              <PhoneAuth onCodeSent={handleCodeSent} />
             </TabsContent>
             <TabsContent value="verify">
-              <VerifyCode />
+              <VerifyCode 
+                phoneNumber={phoneNumber} 
+                onBack={handleBack} 
+                onSuccess={handleSuccess} 
+              />
             </TabsContent>
           </Tabs>
         </CardContent>

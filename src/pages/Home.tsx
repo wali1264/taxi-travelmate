@@ -56,6 +56,27 @@ const Home = () => {
     setSelectedDriver(driver);
   };
 
+  const handleChat = () => {
+    toast({
+      title: "Chat",
+      description: "Chat feature will be available soon",
+    });
+  };
+
+  const handleCall = () => {
+    toast({
+      title: "Call",
+      description: "Call feature will be available soon",
+    });
+  };
+
+  const handleBook = () => {
+    toast({
+      title: "Book",
+      description: "Please select a destination first",
+    });
+  };
+
   return (
     <AppLayout>
       <div className="relative h-full flex flex-col">
@@ -73,15 +94,15 @@ const Home = () => {
         <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-lg transition-all duration-300 z-10">
           {selectedDriver ? (
             <div className="p-4">
-              <DriverCard driver={selectedDriver} expanded />
-              <RideRequest driver={selectedDriver} />
-              <Button 
-                variant="outline" 
-                className="w-full mt-4"
-                onClick={() => setSelectedDriver(null)}
-              >
-                Back to Drivers
-              </Button>
+              <DriverCard 
+                driver={selectedDriver} 
+                expanded={true}
+                onClose={() => setSelectedDriver(null)}
+                onChat={handleChat}
+                onCall={handleCall}
+                onBook={handleBook}
+              />
+              <RideRequest selectedDriver={selectedDriver} />
             </div>
           ) : (
             <div className="p-4 space-y-4">
@@ -93,7 +114,9 @@ const Home = () => {
                     onClick={() => handleDriverSelect(driver)}
                     className="cursor-pointer"
                   >
-                    <DriverCard driver={driver} />
+                    <DriverCard 
+                      driver={driver} 
+                    />
                   </div>
                 ))}
               </div>

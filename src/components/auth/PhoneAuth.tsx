@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { ChevronRight, Smartphone } from 'lucide-react';
 
 interface PhoneAuthProps {
-  onCodeSent: (phoneNumber: string) => void;
+  onCodeSent?: (phoneNumber: string) => void;
 }
 
 const PhoneAuth: React.FC<PhoneAuthProps> = ({ onCodeSent }) => {
@@ -31,7 +31,7 @@ const PhoneAuth: React.FC<PhoneAuthProps> = ({ onCodeSent }) => {
       
       if (result.success) {
         toast.success('Verification code sent!');
-        onCodeSent(formattedPhone);
+        if (onCodeSent) onCodeSent(formattedPhone);
       } else {
         toast.error(result.message || 'Failed to send verification code');
       }
