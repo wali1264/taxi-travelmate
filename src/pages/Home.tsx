@@ -12,6 +12,7 @@ import AppLayout from '../components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { ChevronUp, ChevronDown } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const Home = () => {
   const { user } = useAuth();
@@ -19,7 +20,9 @@ const Home = () => {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [userLocation, setUserLocation] = useState<Location | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -36,6 +39,7 @@ const Home = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         console.log("Fetching user location and drivers...");
         
         const location = await mapAPI.getUserLocation();
@@ -47,6 +51,7 @@ const Home = () => {
         setDrivers(nearbyDrivers);
       } catch (error) {
         console.error("Error fetching data:", error);
+        setError("خطا در دریافت اطلاعات. لطفاً دوباره تلاش کنید.");
         toast({
           title: "خطا",
           description: "خطا در بارگذاری اطلاعات نقشه",
@@ -58,7 +63,7 @@ const Home = () => {
     };
 
     fetchData();
-  }, [currentRide, navigate, toast]);
+  }, [currentRide, navigate, toast, retryCount]);
 
   const handleDriverSelect = (driver: Driver) => {
     console.log("Driver selected:", driver.name);
@@ -96,6 +101,10 @@ const Home = () => {
     });
   };
 
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+  };
+
   const togglePanel = () => {
     setIsPanelCollapsed(!isPanelCollapsed);
   };
@@ -112,6 +121,23 @@ const Home = () => {
             onSelectDriver={handleDriverSelect}
             isLoading={isLoading}
           />
+          
+          {/* Error display with retry button */}
+          {error && !isLoading && (
+            <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+              <Alert className="w-11/12 max-w-md bg-white shadow-lg">
+                <AlertTitle>خطا در بارگذاری</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+                <Button 
+                  onClick={handleRetry} 
+                  variant="outline" 
+                  className="mt-4"
+                >
+                  تلاش مجدد
+                </Button>
+              </Alert>
+            </div>
+          )}
         </div>
         
         {/* Driver Details or Request Form */}

@@ -67,12 +67,39 @@ export const mapAPI = {
   // Get user's current location
   getUserLocation: async (): Promise<Location> => {
     console.log("Getting user location...");
-    await delay(500);
-    // اطمینان از بازگشت یک موقعیت معتبر
-    return {
-      latitude: 35.7219, // مختصات تهران به عنوان مثال
-      longitude: 51.3347
-    };
+    try {
+      await delay(500);
+      
+      // First try to use browser geolocation
+      if (navigator.geolocation) {
+        try {
+          // Try to get current position, but with a timeout
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(
+              resolve,
+              reject,
+              { timeout: 5000, maximumAge: 0, enableHighAccuracy: true }
+            );
+          });
+          
+          console.log("Browser geolocation successful:", position.coords);
+          return {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          };
+        } catch (geoError) {
+          console.log("Browser geolocation failed, using fallback:", geoError);
+        }
+      }
+      
+      // Fallback to mock data if geolocation fails or isn't available
+      console.log("Using mock location data:", mockUserLocation);
+      return mockUserLocation;
+    } catch (error) {
+      console.error("Error getting location:", error);
+      // In case of any error, return the mock location as fallback
+      return mockUserLocation;
+    }
   },
 
   // Get driver's live location (simulated)
