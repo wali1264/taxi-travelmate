@@ -11,7 +11,7 @@ import RideRequest from '../components/ride/RideRequest';
 import AppLayout from '../components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ChevronUp, ChevronDown } from 'lucide-react';
+import { ChevronUp, ChevronDown, RefreshCw } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const Home = () => {
@@ -23,6 +23,7 @@ const Home = () => {
   const [error, setError] = useState<string | null>(null);
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [mapLoadAttempt, setMapLoadAttempt] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -64,6 +65,19 @@ const Home = () => {
 
     fetchData();
   }, [currentRide, navigate, toast, retryCount]);
+
+  // Force map reload if needed
+  useEffect(() => {
+    if (!userLocation && !isLoading && mapLoadAttempt < 3) {
+      const timer = setTimeout(() => {
+        console.log("Forcing map reload attempt:", mapLoadAttempt + 1);
+        setMapLoadAttempt(prev => prev + 1);
+        setRetryCount(prev => prev + 1);
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [userLocation, isLoading, mapLoadAttempt]);
 
   const handleDriverSelect = (driver: Driver) => {
     console.log("Driver selected:", driver.name);
@@ -133,6 +147,7 @@ const Home = () => {
                   variant="outline" 
                   className="mt-4"
                 >
+                  <RefreshCw className="mr-2 h-4 w-4" />
                   تلاش مجدد
                 </Button>
               </Alert>
@@ -170,19 +185,25 @@ const Home = () => {
               <p className="text-sm text-muted-foreground">
                 رانندگان در شعاع ۵ کیلومتری شما نمایش داده می‌شوند. برای مشاهده اطلاعات بیشتر روی نشانگر راننده‌ها کلیک کنید.
               </p>
-              <div className="driver-list space-y-3">
-                {drivers.map(driver => (
-                  <div 
-                    key={driver.id} 
-                    onClick={() => handleDriverSelect(driver)}
-                    className="cursor-pointer tap-effect"
-                  >
-                    <DriverCard 
-                      driver={driver} 
-                    />
-                  </div>
-                ))}
-              </div>
+              {drivers.length > 0 ? (
+                <div className="driver-list space-y-3">
+                  {drivers.map(driver => (
+                    <div 
+                      key={driver.id} 
+                      onClick={() => handleDriverSelect(driver)}
+                      className="cursor-pointer tap-effect"
+                    >
+                      <DriverCard 
+                        driver={driver} 
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-4 text-center text-muted-foreground">
+                  {userLocation ? "در حال جستجوی رانندگان در اطراف شما..." : "در حال تعیین موقعیت شما..."}
+                </div>
+              )}
             </div>
           )}
         </div>

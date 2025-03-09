@@ -77,8 +77,11 @@ export const mapAPI = {
           const position = await new Promise<GeolocationPosition>((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(
               resolve,
-              reject,
-              { timeout: 5000, maximumAge: 0, enableHighAccuracy: true }
+              (error) => {
+                console.error("Geolocation error:", error.message);
+                reject(error);
+              },
+              { timeout: 3000, maximumAge: 0, enableHighAccuracy: true }
             );
           });
           
@@ -90,6 +93,8 @@ export const mapAPI = {
         } catch (geoError) {
           console.log("Browser geolocation failed, using fallback:", geoError);
         }
+      } else {
+        console.log("Geolocation not supported by this browser");
       }
       
       // Fallback to mock data if geolocation fails or isn't available

@@ -73,88 +73,84 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-/* استایل‌های نشانگر کاربر */
-.user-marker {
-  z-index: 5;
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
-/* استایل‌های نشانگر راننده */
-.driver-marker {
-  cursor: pointer;
-  transition: all 0.3s ease;
-  z-index: 1;
+.mapboxgl-map {
+  height: 100%;
+  width: 100%;
 }
 
-.driver-marker:hover {
-  transform: scale(1.1);
-  z-index: 2;
+.map-container {
+  height: 100%;
+  width: 100%;
 }
 
-.selected-driver {
-  z-index: 3 !important;
-  animation: pulse 2s infinite;
+.mapboxgl-canvas {
+  outline: none;
 }
 
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
+.mapboxgl-popup {
+  max-width: 200px;
 }
 
-/* استایل popup راننده */
 .driver-popup .mapboxgl-popup-content {
   padding: 10px;
   border-radius: 8px;
 }
 
-/* استایل‌های دیگر */
-.tap-effect {
-  transition: transform 0.1s;
-}
-
-.tap-effect:active {
-  transform: scale(0.97);
-}
-
 .bottom-sheet {
-  transform: translateY(0);
   transition: transform 0.3s ease-in-out;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 .bottom-sheet-collapsed {
-  transform: translateY(calc(100% - 100px));
+  transform: translateY(calc(100% - 50px));
 }
 
-.driver-list {
-  max-height: 30vh;
-  overflow-y: auto;
-  overflow-x: hidden;
+.user-marker {
+  cursor: pointer;
 }
 
-.ride-details-panel {
-  transition: all 0.3s ease;
+.driver-marker {
+  cursor: pointer;
 }
 
-.mapboxgl-map {
+.tap-effect {
+  transition: transform 0.1s ease;
+}
+
+.tap-effect:active {
+  transform: scale(0.98);
+}
+
+/* Make sure map takes up the full height */
+#map-container {
+  position: absolute;
+  top: 0;
+  bottom: 0;
   width: 100%;
   height: 100%;
 }
 
-/* بهبود نمایش کنترل‌های نقشه */
-.mapboxgl-ctrl-logo {
-  opacity: 0.6;
+/* Ensure MapboxGL controls are visible */
+.mapboxgl-ctrl-group {
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-.mapboxgl-ctrl-attrib {
-  font-size: 0.7rem;
-  opacity: 0.7;
+.mapboxgl-ctrl button {
+  width: 30px;
+  height: 30px;
 }
