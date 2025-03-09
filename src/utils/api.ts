@@ -1,13 +1,15 @@
+
 import { User, Driver, Ride, Location } from './types';
 import { mockDrivers, mockRideHistory, mockUserLocation } from './mockData';
 
 // Simulate API delays
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Set default location to Farah, Afghanistan
+// Set default location to user's specific location in Farah, Afghanistan
+// Coordinates from the user's shared Google Maps link
 const FARAH_LOCATION: Location = {
-  latitude: 32.3747, 
-  longitude: 62.1167
+  latitude: 32.37636, 
+  longitude: 62.11396
 };
 
 // Authentication API
@@ -75,8 +77,8 @@ export const mapAPI = {
     try {
       await delay(500);
       
-      // For demo purposes, return Farah location directly
-      console.log("Using Farah, Afghanistan as default location");
+      // For demo purposes, return user's specific Farah location directly
+      console.log("Using specific Farah, Afghanistan location");
       return FARAH_LOCATION;
     } catch (error) {
       console.error("Error getting location:", error);

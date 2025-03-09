@@ -24,7 +24,7 @@ const MapView: React.FC<MapViewProps> = ({
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const [zoom, setZoom] = useState<number>(14);
+  const [zoom, setZoom] = useState<number>(15); // Increased zoom level
   const markers = useRef<mapboxgl.Marker[]>([]);
   const userMarker = useRef<mapboxgl.Marker | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
@@ -33,10 +33,10 @@ const MapView: React.FC<MapViewProps> = ({
   // Use a demo token for display
   const DEMO_TOKEN = 'pk.eyJ1IjoibG92YWJsZS1kZXYiLCJhIjoiY2x0NXBmM2M1MDluNTJrcGM4amk1ZmR1MSJ9.a3rRII3S79F-vW7BtqnLOQ';
   
-  // Default to Farah, Afghanistan if location is not available
+  // Default to specific location in Farah, Afghanistan
   const FARAH_LOCATION: Location = {
-    latitude: 32.3747, 
-    longitude: 62.1167
+    latitude: 32.37636, 
+    longitude: 62.11396
   };
   
   console.log("MapView rendering with userLocation:", userLocation);

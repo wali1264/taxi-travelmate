@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -14,10 +13,10 @@ import { useToast } from '@/hooks/use-toast';
 import { ChevronUp, ChevronDown, RefreshCw } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
-// Default to Farah, Afghanistan if location is not available
+// Default to specific location in Farah, Afghanistan
 const FARAH_LOCATION: Location = {
-  latitude: 32.3747, 
-  longitude: 62.1167
+  latitude: 32.37636, 
+  longitude: 62.11396
 };
 
 const Home = () => {
