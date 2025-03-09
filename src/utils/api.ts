@@ -66,8 +66,13 @@ export const mapAPI = {
 
   // Get user's current location
   getUserLocation: async (): Promise<Location> => {
+    console.log("Getting user location...");
     await delay(500);
-    return mockUserLocation;
+    // اطمینان از بازگشت یک موقعیت معتبر
+    return {
+      latitude: 35.7219, // مختصات تهران به عنوان مثال
+      longitude: 51.3347
+    };
   },
 
   // Get driver's live location (simulated)
@@ -79,7 +84,7 @@ export const mapAPI = {
     
     // پیدا کردن راننده
     const driver = mockDrivers.find(d => d.id === driverId);
-    if (!driver) return mockUserLocation; // در صورت عدم وجود راننده مکان کاربر برگردانده می‌شود
+    if (!driver) return mockUserLocation; 
     
     // ایجاد حرکت به سمت کاربر با افزودن مقدار کوچک تصادفی
     const moveTowardsUser = (driverCoord: number, userCoord: number): number => {

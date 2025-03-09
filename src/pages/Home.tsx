@@ -24,6 +24,8 @@ const Home = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log("Home component mounted or updated");
+    
     // Redirect to ride details if there is an active ride
     if (currentRide) {
       navigate(`/ride/${currentRide.id}`);
@@ -34,18 +36,22 @@ const Home = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+        console.log("Fetching user location and drivers...");
+        
         const location = await mapAPI.getUserLocation();
+        console.log("User location fetched:", location);
         setUserLocation(location);
         
         const nearbyDrivers = await mapAPI.getNearbyDrivers(location);
+        console.log("Nearby drivers fetched:", nearbyDrivers.length);
         setDrivers(nearbyDrivers);
       } catch (error) {
+        console.error("Error fetching data:", error);
         toast({
           title: "خطا",
           description: "خطا در بارگذاری اطلاعات نقشه",
           variant: "destructive",
         });
-        console.error("Error fetching data:", error);
       } finally {
         setIsLoading(false);
       }
@@ -55,6 +61,7 @@ const Home = () => {
   }, [currentRide, navigate, toast]);
 
   const handleDriverSelect = (driver: Driver) => {
+    console.log("Driver selected:", driver.name);
     setSelectedDriver(driver);
     setIsPanelCollapsed(false); // باز کردن پنل برای نمایش جزئیات راننده
   };

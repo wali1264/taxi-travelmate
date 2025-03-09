@@ -23,17 +23,23 @@ const MapView: React.FC<MapViewProps> = ({
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const [zoom, setZoom] = useState<number>(13);
+  const [zoom, setZoom] = useState<number>(14);
   const markers = useRef<mapboxgl.Marker[]>([]);
   const userMarker = useRef<mapboxgl.Marker | null>(null);
 
-  // استفاده از یک توکن موقت برای نمایش - در محیط واقعی باید از روش‌های امن‌تری استفاده شود
-  // این توکن محدود شده و فقط برای نمایش اولیه است
+  // استفاده از یک توکن موقت برای نمایش
   const DEMO_TOKEN = 'pk.eyJ1IjoibG92YWJsZS1kZXYiLCJhIjoiY2x0NXBmM2M1MDluNTJrcGM4amk1ZmR1MSJ9.a3rRII3S79F-vW7BtqnLOQ';
+  
+  console.log("MapView rendering with userLocation:", userLocation);
   
   // تابع برای ایجاد نقشه
   const initializeMap = () => {
-    if (!mapContainer.current || !userLocation) return;
+    if (!mapContainer.current || !userLocation) {
+      console.log("Cannot initialize map: container or location missing");
+      return;
+    }
+
+    console.log("Initializing map with center:", [userLocation.longitude, userLocation.latitude]);
 
     // تنظیم توکن دسترسی Mapbox
     mapboxgl.accessToken = DEMO_TOKEN;
@@ -73,7 +79,7 @@ const MapView: React.FC<MapViewProps> = ({
       addDriverMarkers();
       
       map.current.on('load', () => {
-        // نقشه بارگذاری شده است
+        console.log("Map loaded successfully");
       });
 
       // زوم تغییر می کند
@@ -89,14 +95,18 @@ const MapView: React.FC<MapViewProps> = ({
 
   // اضافه کردن نشانگرهای راننده‌ها
   const addDriverMarkers = () => {
-    if (!map.current || !userLocation) return;
+    if (!map.current || !userLocation) {
+      console.log("Cannot add driver markers: map or userLocation missing");
+      return;
+    }
+    
+    console.log("Adding markers for", drivers.length, "drivers");
     
     // حذف نشانگرهای قبلی
     markers.current.forEach(marker => marker.remove());
     markers.current = [];
 
     // اضافه کردن نشانگر برای هر راننده با مختصات شبیه‌سازی شده
-    // در یک برنامه واقعی، مختصات واقعی راننده‌ها از سرور دریافت می‌شود
     drivers.forEach(driver => {
       // ایجاد مختصات تصادفی در شعاع 5 کیلومتری کاربر (تقریباً 0.045 درجه)
       const getRandomOffset = () => (Math.random() - 0.5) * 0.09; // تقریباً 5 کیلومتر
@@ -141,6 +151,7 @@ const MapView: React.FC<MapViewProps> = ({
       // کلیک روی نشانگر برای انتخاب راننده
       el.addEventListener('click', (e) => {
         e.stopPropagation();
+        console.log("Driver selected:", driver.name);
         if (onSelectDriver) {
           onSelectDriver(driver);
         }
@@ -160,17 +171,21 @@ const MapView: React.FC<MapViewProps> = ({
 
   // هنگامی که userLocation یا drivers تغییر می‌کنند، نقشه را بروزرسانی کنید
   useEffect(() => {
+    console.log("useEffect triggered with userLocation:", userLocation);
     if (map.current && userLocation) {
+      console.log("Map exists, updating center");
       map.current.setCenter([userLocation.longitude, userLocation.latitude]);
       addDriverMarkers();
     } else if (userLocation && !map.current) {
+      console.log("Initializing map for the first time");
       initializeMap();
     }
-  }, [userLocation, drivers, selectedDriver]);
+  }, [userLocation, drivers]);
 
   // update markers when selected driver changes
   useEffect(() => {
     if (map.current) {
+      console.log("Selected driver changed, updating markers");
       addDriverMarkers();
     }
   }, [selectedDriver]);
@@ -179,6 +194,7 @@ const MapView: React.FC<MapViewProps> = ({
   useEffect(() => {
     return () => {
       if (map.current) {
+        console.log("Cleaning up map");
         map.current.remove();
         map.current = null;
       }
