@@ -30,17 +30,27 @@ const MapView: React.FC<MapViewProps> = ({
   const [mapError, setMapError] = useState<string | null>(null);
   const [mapInitialized, setMapInitialized] = useState(false);
   
-  // استفاده از یک توکن موقت برای نمایش
+  // Use a demo token for display
   const DEMO_TOKEN = 'pk.eyJ1IjoibG92YWJsZS1kZXYiLCJhIjoiY2x0NXBmM2M1MDluNTJrcGM4amk1ZmR1MSJ9.a3rRII3S79F-vW7BtqnLOQ';
+  
+  // Default to Farah, Afghanistan if location is not available
+  const FARAH_LOCATION: Location = {
+    latitude: 32.3747, 
+    longitude: 62.1167
+  };
   
   console.log("MapView rendering with userLocation:", userLocation);
   
-  // تابع برای ایجاد نقشه
+  // Function to initialize the map
   const initializeMap = () => {
-    if (!mapContainer.current || !userLocation) {
-      console.log("Cannot initialize map: container or location missing", mapContainer.current ? "Container exists" : "No container", userLocation ? "Location exists" : "No location");
+    if (!mapContainer.current) {
+      console.log("Cannot initialize map: container missing");
       return;
     }
+
+    // Use Farah location as fallback if userLocation is null
+    const locationToUse = userLocation || FARAH_LOCATION;
+    console.log("Using location for map:", locationToUse);
 
     if (!mapboxgl.supported()) {
       console.log("MapboxGL is not supported in this browser");
@@ -48,17 +58,17 @@ const MapView: React.FC<MapViewProps> = ({
       return;
     }
 
-    console.log("Initializing map with center:", [userLocation.longitude, userLocation.latitude]);
+    console.log("Initializing map with center:", [locationToUse.longitude, locationToUse.latitude]);
 
     try {
-      // تنظیم توکن دسترسی Mapbox
+      // Set Mapbox access token
       mapboxgl.accessToken = DEMO_TOKEN;
       
-      // ایجاد نقشه
+      // Create map
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/streets-v11',
-        center: [userLocation.longitude, userLocation.latitude],
+        center: [locationToUse.longitude, locationToUse.latitude],
         zoom: zoom,
         attributionControl: false,
         failIfMajorPerformanceCaveat: false // Allow map to render even with performance issues
@@ -81,13 +91,13 @@ const MapView: React.FC<MapViewProps> = ({
         setMapError("خطا در بارگذاری نقشه. لطفاً مرورگر خود را بروزرسانی کنید یا از مرورگر دیگری استفاده کنید.");
       });
 
-      // اضافه کردن کنترل‌های جهت‌یابی به نقشه
+      // Add navigation controls to the map
       map.current.addControl(
         new mapboxgl.NavigationControl(),
         'top-right'
       );
       
-      // زوم تغییر می کند
+      // Track zoom changes
       map.current.on('zoom', () => {
         if (map.current) {
           setZoom(map.current.getZoom());
@@ -104,10 +114,13 @@ const MapView: React.FC<MapViewProps> = ({
 
   // Add user marker
   const addUserMarker = () => {
-    if (!map.current || !userLocation) return;
+    if (!map.current) return;
     
     try {
-      // اضافه کردن نشانگر موقعیت کاربر
+      // Use Farah location as fallback if userLocation is null
+      const locationToUse = userLocation || FARAH_LOCATION;
+      
+      // Create user marker element
       const userEl = document.createElement('div');
       userEl.className = 'user-marker';
       userEl.innerHTML = `
@@ -124,38 +137,41 @@ const MapView: React.FC<MapViewProps> = ({
       }
       
       userMarker.current = new mapboxgl.Marker(userEl)
-        .setLngLat([userLocation.longitude, userLocation.latitude])
+        .setLngLat([locationToUse.longitude, locationToUse.latitude])
         .addTo(map.current);
         
-      console.log("User marker added at:", userLocation);
+      console.log("User marker added at:", locationToUse);
     } catch (error) {
       console.error("Error adding user marker:", error);
     }
   };
 
-  // اضافه کردن نشانگرهای راننده‌ها
+  // Add driver markers
   const addDriverMarkers = () => {
-    if (!map.current || !userLocation || !map.current.loaded()) {
-      console.log("Cannot add driver markers: map or userLocation missing or map not loaded");
+    if (!map.current || !map.current.loaded()) {
+      console.log("Cannot add driver markers: map not loaded");
       return;
     }
     
     try {
       console.log("Adding markers for", drivers.length, "drivers");
       
-      // حذف نشانگرهای قبلی
+      // Remove previous markers
       markers.current.forEach(marker => marker.remove());
       markers.current = [];
 
-      // اضافه کردن نشانگر برای هر راننده
+      // Use Farah location as the center for drivers
+      const centerLocation = userLocation || FARAH_LOCATION;
+
+      // Add a marker for each driver
       drivers.forEach(driver => {
-        // محاسبه فاصله تصادفی در شعاع 5 کیلومتری
-        const getRandomOffset = () => (Math.random() - 0.5) * 0.09; // تقریباً 5 کیلومتر
+        // Calculate random offset within 5km radius
+        const getRandomOffset = () => (Math.random() - 0.5) * 0.09; // Approximately 5km
         
-        const driverLng = userLocation.longitude + getRandomOffset();
-        const driverLat = userLocation.latitude + getRandomOffset();
+        const driverLng = centerLocation.longitude + getRandomOffset();
+        const driverLat = centerLocation.latitude + getRandomOffset();
         
-        // ایجاد نشانگر سفارشی برای راننده
+        // Create custom marker for driver
         const el = document.createElement('div');
         el.className = `driver-marker ${selectedDriver && selectedDriver.id === driver.id ? 'selected-driver' : ''}`;
         el.innerHTML = `
@@ -169,15 +185,15 @@ const MapView: React.FC<MapViewProps> = ({
           </div>
         `;
         
-        // ایجاد نشانگر و اضافه کردن به نقشه
+        // Create marker and add to map
         const marker = new mapboxgl.Marker(el)
           .setLngLat([driverLng, driverLat])
           .addTo(map.current);
         
-        // ذخیره نشانگر برای حذف بعدی
+        // Store marker for later removal
         markers.current.push(marker);
         
-        // نمایش popup با اطلاعات اولیه راننده
+        // Show popup with initial driver info
         const popup = new mapboxgl.Popup({ 
           offset: 25, 
           closeButton: false,
@@ -189,7 +205,7 @@ const MapView: React.FC<MapViewProps> = ({
           </div>`
         );
         
-        // کلیک روی نشانگر برای انتخاب راننده
+        // Click on marker to select driver
         el.addEventListener('click', (e) => {
           e.stopPropagation();
           console.log("Driver selected:", driver.name);
@@ -198,7 +214,7 @@ const MapView: React.FC<MapViewProps> = ({
           }
         });
         
-        // نمایش popup با hover
+        // Show popup on hover
         el.addEventListener('mouseenter', () => {
           marker.setPopup(popup);
           popup.addTo(map.current!);
@@ -215,12 +231,13 @@ const MapView: React.FC<MapViewProps> = ({
 
   // Render a fallback static map when WebGL is not available
   const renderStaticMap = () => {
-    if (!userLocation) return null;
+    // Use Farah as default location
+    const locationToUse = userLocation || FARAH_LOCATION;
     
     try {
       const staticMapUrl = `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/${
-        userLocation.longitude
-      },${userLocation.latitude},13,0/600x400?access_token=${DEMO_TOKEN}`;
+        locationToUse.longitude
+      },${locationToUse.latitude},13,0/600x400?access_token=${DEMO_TOKEN}`;
       
       return (
         <div className="relative h-full flex flex-col items-center">
@@ -248,15 +265,9 @@ const MapView: React.FC<MapViewProps> = ({
     }
   };
 
-  // هنگامی که userLocation یا drivers تغییر می‌کنند، نقشه را بروزرسانی کنید
+  // Initialize and update map when locations or drivers change
   useEffect(() => {
-    console.log("useEffect triggered with userLocation:", userLocation);
-    
-    // If no user location yet, don't do anything
-    if (!userLocation) {
-      console.log("No user location yet, skipping map initialization");
-      return;
-    }
+    console.log("useEffect triggered");
     
     // Clean up previous map instance if it exists
     if (map.current) {
@@ -274,7 +285,7 @@ const MapView: React.FC<MapViewProps> = ({
       }
     }, 500);
     
-    // پاکسازی نقشه هنگام unmount
+    // Cleanup map on unmount
     return () => {
       clearTimeout(timer);
       if (map.current) {
@@ -285,16 +296,16 @@ const MapView: React.FC<MapViewProps> = ({
     };
   }, [userLocation]);
 
-  // update markers when drivers or selected driver changes
+  // Update markers when drivers or selected driver changes
   useEffect(() => {
-    if (map.current && map.current.loaded() && userLocation) {
+    if (map.current && map.current.loaded()) {
       console.log("Updating markers for drivers or selection change");
       addDriverMarkers();
     }
   }, [drivers, selectedDriver, mapInitialized]);
 
-  // اگر در حال بارگذاری هستیم یا موقعیت کاربر وجود ندارد
-  if (isLoading || !userLocation) {
+  // If loading or no user location
+  if (isLoading) {
     return (
       <div className="h-full bg-gray-100 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -304,14 +315,14 @@ const MapView: React.FC<MapViewProps> = ({
 
   return (
     <div className="relative h-full">
-      {/* ظرف نقشه */}
+      {/* Map container */}
       <div 
         id="map-container"
         ref={mapContainer} 
         className="absolute inset-0 bg-blue-50"
       ></div>
       
-      {/* نمایش خطا اگر وجود داشته باشد */}
+      {/* Error display if it exists */}
       {mapError && (
         <Alert className="absolute top-4 left-4 right-4 bg-white/90 shadow-lg">
           <AlertCircle className="h-4 w-4" />
@@ -319,10 +330,10 @@ const MapView: React.FC<MapViewProps> = ({
         </Alert>
       )}
       
-      {/* نمایش نقشه استاتیک اگر نقشه اصلی با خطا مواجه شد */}
+      {/* Display static map if main map fails */}
       {mapError && renderStaticMap()}
 
-      {/* کنترل‌های زوم نقشه */}
+      {/* Map zoom controls */}
       <Card className="absolute top-4 right-4 p-2 flex space-x-2">
         <button 
           className="h-8 w-8 bg-white rounded-full flex items-center justify-center shadow-sm tap-effect"

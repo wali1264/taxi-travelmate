@@ -1,9 +1,14 @@
-
 import { User, Driver, Ride, Location } from './types';
 import { mockDrivers, mockRideHistory, mockUserLocation } from './mockData';
 
 // Simulate API delays
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Set default location to Farah, Afghanistan
+const FARAH_LOCATION: Location = {
+  latitude: 32.3747, 
+  longitude: 62.1167
+};
 
 // Authentication API
 export const authAPI = {
@@ -70,40 +75,13 @@ export const mapAPI = {
     try {
       await delay(500);
       
-      // First try to use browser geolocation
-      if (navigator.geolocation) {
-        try {
-          // Try to get current position, but with a timeout
-          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(
-              resolve,
-              (error) => {
-                console.error("Geolocation error:", error.message);
-                reject(error);
-              },
-              { timeout: 3000, maximumAge: 0, enableHighAccuracy: true }
-            );
-          });
-          
-          console.log("Browser geolocation successful:", position.coords);
-          return {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-          };
-        } catch (geoError) {
-          console.log("Browser geolocation failed, using fallback:", geoError);
-        }
-      } else {
-        console.log("Geolocation not supported by this browser");
-      }
-      
-      // Fallback to mock data if geolocation fails or isn't available
-      console.log("Using mock location data:", mockUserLocation);
-      return mockUserLocation;
+      // For demo purposes, return Farah location directly
+      console.log("Using Farah, Afghanistan as default location");
+      return FARAH_LOCATION;
     } catch (error) {
       console.error("Error getting location:", error);
-      // In case of any error, return the mock location as fallback
-      return mockUserLocation;
+      // In case of any error, return Farah location as fallback
+      return FARAH_LOCATION;
     }
   },
 
@@ -111,28 +89,28 @@ export const mapAPI = {
   getDriverLiveLocation: async (driverId: string): Promise<Location> => {
     await delay(300);
     
-    // در دنیای واقعی، این داده‌ها از سرور یا سیستم GPS راننده دریافت می‌شود
-    // برای شبیه‌سازی، مکان راننده را با یک حرکت تصادفی به سمت کاربر تغییر می‌دهیم
+    // In the real world, this data would come from the driver's GPS system
+    // For simulation, we'll make a random movement from the driver's current position towards user
     
-    // پیدا کردن راننده
+    // Find driver
     const driver = mockDrivers.find(d => d.id === driverId);
-    if (!driver) return mockUserLocation; 
+    if (!driver) return FARAH_LOCATION; 
     
-    // ایجاد حرکت به سمت کاربر با افزودن مقدار کوچک تصادفی
+    // Create movement towards user with small random addition
     const moveTowardsUser = (driverCoord: number, userCoord: number): number => {
       const direction = userCoord > driverCoord ? 1 : -1;
       const distance = Math.abs(userCoord - driverCoord);
       
-      // اگر راننده نزدیک کاربر است، حرکت کمتری انجام دهد
+      // If driver is close to user, make smaller movements
       const moveAmount = Math.min(distance, Math.random() * 0.0008);
       
       return driverCoord + (moveAmount * direction);
     };
     
-    // حرکت به سمت کاربر با کمی تصادفی‌سازی
+    // Move towards user with some randomization
     return {
-      latitude: moveTowardsUser(driver.location.latitude, mockUserLocation.latitude),
-      longitude: moveTowardsUser(driver.location.longitude, mockUserLocation.longitude)
+      latitude: moveTowardsUser(driver.location.latitude, FARAH_LOCATION.latitude),
+      longitude: moveTowardsUser(driver.location.longitude, FARAH_LOCATION.longitude)
     };
   }
 };

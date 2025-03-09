@@ -14,16 +14,21 @@ import { useToast } from '@/hooks/use-toast';
 import { ChevronUp, ChevronDown, RefreshCw } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
+// Default to Farah, Afghanistan if location is not available
+const FARAH_LOCATION: Location = {
+  latitude: 32.3747, 
+  longitude: 62.1167
+};
+
 const Home = () => {
   const { user } = useAuth();
   const { currentRide, selectedDriver, setSelectedDriver } = useRide();
   const [drivers, setDrivers] = useState<Driver[]>([]);
-  const [userLocation, setUserLocation] = useState<Location | null>(null);
+  const [userLocation, setUserLocation] = useState<Location>(FARAH_LOCATION);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const [mapLoadAttempt, setMapLoadAttempt] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -66,23 +71,10 @@ const Home = () => {
     fetchData();
   }, [currentRide, navigate, toast, retryCount]);
 
-  // Force map reload if needed
-  useEffect(() => {
-    if (!userLocation && !isLoading && mapLoadAttempt < 3) {
-      const timer = setTimeout(() => {
-        console.log("Forcing map reload attempt:", mapLoadAttempt + 1);
-        setMapLoadAttempt(prev => prev + 1);
-        setRetryCount(prev => prev + 1);
-      }, 2000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [userLocation, isLoading, mapLoadAttempt]);
-
   const handleDriverSelect = (driver: Driver) => {
     console.log("Driver selected:", driver.name);
     setSelectedDriver(driver);
-    setIsPanelCollapsed(false); // باز کردن پنل برای نمایش جزئیات راننده
+    setIsPanelCollapsed(false); // Open panel to show driver details
   };
 
   const handleChat = () => {
@@ -97,7 +89,7 @@ const Home = () => {
       title: "تماس",
       description: `در حال تماس با ${selectedDriver?.name}...`,
     });
-    // در حالت واقعی اینجا اتصال به API تماس انجام می‌شود
+    // In reality, this would connect to a call API
   };
 
   const handleBook = () => {
@@ -181,7 +173,7 @@ const Home = () => {
             </div>
           ) : (
             <div className="p-4 space-y-4">
-              <h2 className="text-xl font-semibold">رانندگان در اطراف شما</h2>
+              <h2 className="text-xl font-semibold">رانندگان در شهر فراه</h2>
               <p className="text-sm text-muted-foreground">
                 رانندگان در شعاع ۵ کیلومتری شما نمایش داده می‌شوند. برای مشاهده اطلاعات بیشتر روی نشانگر راننده‌ها کلیک کنید.
               </p>
@@ -201,7 +193,7 @@ const Home = () => {
                 </div>
               ) : (
                 <div className="p-4 text-center text-muted-foreground">
-                  {userLocation ? "در حال جستجوی رانندگان در اطراف شما..." : "در حال تعیین موقعیت شما..."}
+                  {!isLoading ? "در حال جستجوی رانندگان در شهر فراه..." : "در حال بارگذاری..."}
                 </div>
               )}
             </div>
